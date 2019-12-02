@@ -105,6 +105,9 @@ const publishPlaylist = (req, res) => {
         const callbackSong = (error, response, body) => {
           if (error) {
             return res.status(401).send({error: error.body})
+          } else if (JSON.parse(response.body).tracks.total == 0) {
+            console.log(`${song} not found`)
+            return 
           }
           var id = JSON.parse(response.body).tracks.items[0].id
           const options = {

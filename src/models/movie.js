@@ -15,16 +15,18 @@ const movieSchema = new mongoose.Schema({
   description: {
     type: String
   },
-  soundtrack: [{
-    song: {
-      type: String,
-      required: true
-    },
-    songId: {
-      type: String,
-      required: true
-    }
-  }]
+  soundtrack: [
+    String
+  ]
+    // song: {
+    //   type: String,
+    //   required: true
+    // },
+    // songId: {
+    //   type: String,
+    //   required: true
+    // }
+    // ]
 },{
   toObject: {
     virtuals: true
