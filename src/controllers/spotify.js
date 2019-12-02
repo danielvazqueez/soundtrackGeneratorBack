@@ -6,71 +6,88 @@ const querystring = require('querystring')
 const request = require('request')
 
 
-function publishPlaylist(req, res) {
+async function publishPlaylist(req, res) {
   console.log("new publish playlist");
   const {token, movieName, soundtrack} = req.body;
 
   const headers = {
-      Authorization: 'Bearer ' + req.body.token,
+      Authorization: 'Bearer ' + token,
       'Content-Type': 'application/json'
   };
 
   try {
+    const userId = await getUser(headers);
+    const newPlaylistId = await createPlaylist(headers, movieName, userId);
+    let songsIds = await Promise.all(
+      soundtrack.map(songName => searchSong(headers, songName))
+    )
+    songsIds = songsIds.filter(x => x);
+    console.log(soundtrack, songsIds)
 
-    getUser(headers, userId => {
-      createPlaylist(headers, movieName, userId, newPlaylistId => {
-        soundtrack.forEach(songName => {
-          searchSong(headers, songName, songId => {
-            addSongToPlaylist(headers, newPlaylistId, songId, (response) => {
-              console.log(`song: ${songId} added to playlist: ${newPlaylistId}`);
-            });
-          });
-        });
-      });
-    });
-
+    Promise.all(
+      songsIds.map(songId => addSongToPlaylist(headers, newPlaylistId, songId))
+    ).then(
+      (x) => {
+        console.log('added')
+      }
+    ).catch(err => console.log(err));
     res.send("Playlist creada exitosamente");
+    // getUser(headers, userId => {
+    //   createPlaylist(headers, movieName, userId, newPlaylistId => {
+    //     soundtrack.forEach(songName => {
+    //       searchSong(headers, songName, songId => {
+    //         addSongToPlaylist(headers, newPlaylistId, songId, (response) => {
+    //           console.log(`song: ${songId} added to playlist: ${newPlaylistId}`);
+    //         });
+    //       });
+    //     });
+    //   });
+    // });
+
+    // res.send("Playlist creada exitosamente");
 
   } catch(err) {
-    return res.status(401).send({ error: err });
+    console.log(err);
+    return res.status(401).json({ error: err });
   }
 }
 
-function getUser(headers, callback) {
+function getUser(headers) {
   const userOptions = {
     url: `${spotify_url}/me`,
     headers
   }
-  request(userOptions, (error, response) => {
-    if(error) {
-      throw error
-    };
-    const userId = JSON.parse(response.body).id;
-    callback(userId);
+  return new Promise((resolve, reject) => {
+    request(userOptions, (error, response) => {
+      if(error) {
+        reject(error);
+      };
+      const userId = JSON.parse(response.body).id;
+      resolve(userId);
+    });
   });
 }
 
-function createPlaylist(headers, movieName, userId, callback) {
+function createPlaylist(headers, movieName, userId) {
     const options = {
       headers,
       json: {
         name: movieName
       }
     }
-  
-  request.post(`${spotify_url}/users/${userId}/playlists`, options,
+  return new Promise((resolve, reject) => {
+    request.post(`${spotify_url}/users/${userId}/playlists`, options,
                (error, response) => {
                  if(error) {
-                   throw new Error(error);
+                   reject(error);
                  }
-                 console.log(response.body);
-
                  const playlistId = response.body.id;
-                 callback(playlistId);
+                 resolve(playlistId);
                });
+  });
 }
 
-function searchSong(headers, songName, callback) {
+function searchSong(headers, songName) {
     const optionsSong = {
       headers,
       url: `${spotify_url}/search?` +
@@ -80,34 +97,39 @@ function searchSong(headers, songName, callback) {
           limit: 1
         }),
     }
+  return new Promise((resolve, reject) => {
     request(optionsSong,
            (error, response) => {
              if(error) {
-               throw new Error(error);
+               reject(error);
              }
              const body = JSON.parse(response.body);
-             if(body.tracks.total == 0) {
-               return;
+             if(!body || !body.tracks || !body.tracks.items || body.track.items.length == 0) {
+               resolve(null);
              }
              const songId = body.tracks.items[0].id;
-             callback(songId);
+             resolve(songId);
            });
+  });
 }
 
-function addSongToPlaylist(headers, playlistId, songId, callback) {
+function addSongToPlaylist(headers, playlistId, songId) {
     const options = {
       headers,
       json: {
         uris: ["spotify:track:" + songId]
       }
     }
-  request.post(`${spotify_url}/playlists/${playlistId}/tracks`, options,
-               (error, response) => {
-                 if (error) {
-                   throw new Error(error);
-                 }
-                 callback(response);
-               });
+
+  return new Promise((resolve, reject) => {
+      request.post(`${spotify_url}/playlists/${playlistId}/tracks`, options,
+                  (error, response) => {
+                    if (error) {
+                      reject(reject);
+                    }
+                    resolve(response);
+                  });
+  });
 }
 
 
