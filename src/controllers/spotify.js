@@ -22,15 +22,8 @@ async function publishPlaylist(req, res) {
       soundtrack.map(songName => searchSong(headers, songName))
     )
     songsIds = songsIds.filter(x => x);
-    console.log(soundtrack, songsIds)
 
-    Promise.all(
-      songsIds.map(songId => addSongToPlaylist(headers, newPlaylistId, songId))
-    ).then(
-      (x) => {
-        console.log('added')
-      }
-    ).catch(err => console.log(err));
+    let result =  await addSongToPlaylist(headers, newPlaylistId, songsIds)
     res.send("Playlist creada exitosamente");
     // getUser(headers, userId => {
     //   createPlaylist(headers, movieName, userId, newPlaylistId => {
@@ -44,7 +37,6 @@ async function publishPlaylist(req, res) {
     //   });
     // });
 
-    // res.send("Playlist creada exitosamente");
 
   } catch(err) {
     console.log(err);
@@ -104,8 +96,8 @@ function searchSong(headers, songName) {
                reject(error);
              }
              const body = JSON.parse(response.body);
-             if(!body || !body.tracks || !body.tracks.items || body.track.items.length == 0) {
-               resolve(null);
+             if(!body.tracks.items || body.tracks.items.length == 0) {
+               return resolve(null);
              }
              const songId = body.tracks.items[0].id;
              resolve(songId);
@@ -113,21 +105,21 @@ function searchSong(headers, songName) {
   });
 }
 
-function addSongToPlaylist(headers, playlistId, songId) {
+function addSongToPlaylist(headers, playlistId, songsIds) {
+  const arrayUris = songsIds.map(songId => "spotify:track:" + songId)
     const options = {
       headers,
       json: {
-        uris: ["spotify:track:" + songId]
+        uris: arrayUris
       }
     }
-
   return new Promise((resolve, reject) => {
       request.post(`${spotify_url}/playlists/${playlistId}/tracks`, options,
                   (error, response) => {
                     if (error) {
                       reject(reject);
                     }
-                    resolve(response);
+                    resolve(response.body);
                   });
   });
 }
