@@ -2,6 +2,9 @@ const CLIENT_ID = process.env.CLIENT_ID || require('../config').CLIENT_ID
 const CLIENT_SECRET = process.env.CLIENT_SECRET || require('../config').CLIENT_SECRET
 const redirect_uri = process.env.REDIRECT_URI || "http://localhost:8080/spotify/redirect"
 const spotify_url = 'https://api.spotify.com/v1'
+const querystring = require('querystring')
+const request = require('request')
+
 
 const requestToken = (req, res) => {
   const scopes = 'playlist-modify-public playlist-read-private'

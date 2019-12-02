@@ -3,7 +3,7 @@ const validator = require('validator')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 
-var secret = process.env.SECRET || require('../config.js').secret
+var secret = process.env.SECRET || require('../config').secret
 
 const userSchema = new mongoose.Schema({
   fname: {

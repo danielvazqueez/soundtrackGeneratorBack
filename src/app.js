@@ -1,10 +1,9 @@
 const express = require('express')
-const querystring = require('querystring')
 const cors = require('cors');
+require('./db/mongoose')
 const router = require('./routes')
 const app = express()
 const port = process.env.PORT || 8080
-const request = require('request')
 
 app.use(cors())
 app.use(express.json()) // parsea a json
