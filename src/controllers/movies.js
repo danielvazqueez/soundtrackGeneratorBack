@@ -18,7 +18,7 @@ const createMovie = function(req, res){
 		} else {
 			const data = response.body
 			if (data.Response == 'False') {
-        return res.status(401).send({ error: data.Error })
+        return res.status(402).send({ error: data.Error })
 			} else {
 				const info = {
 					name: data.Title,

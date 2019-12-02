@@ -13,8 +13,7 @@ router.post('/users', users.createUser)  // signup
 router.patch('/users', auth, users.updateUser)
 router.delete('/users', auth, users.deleteUser)
 
-router.get('/spotify', auth, spotify.requestToken)
-router.post('/spotify/redirect', auth, spotify.redirect)
+router.post('/spotify/publishPlaylist', auth, spotify.publishPlaylist)
 
 router.get('/movies', auth, movies.getMovies)
 router.post('/movies', auth, movies.createMovie)
